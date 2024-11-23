@@ -1,25 +1,59 @@
 #include "userpanel.h"
-#include <QPushButton>
-#include <QVBoxLayout>
 
 UserPanel::UserPanel(QWidget *parent) : QWidget(parent) {
-    auto* layout = new QVBoxLayout(this);
+    // Create UI elements
+    comboBox = new QComboBox(this);
+    comboBox->addItem("Login");
+    comboBox->addItem("Register");
 
-    auto* loginButton = new QPushButton("Login", this);
-    auto* registerButton = new QPushButton("Register", this);
+    usernameLabel = new QLabel("Username:", this);
+    usernameEdit = new QLineEdit(this);
 
-    layout->addWidget(loginButton);
-    layout->addWidget(registerButton);
+    passwordLabel = new QLabel("Password:", this);
+    passwordEdit = new QLineEdit(this);
+    passwordEdit->setEchoMode(QLineEdit::Password);
 
-    connect(loginButton, &QPushButton::clicked, this, &UserPanel::handleLoginClicked);
-    connect(registerButton, &QPushButton::clicked, this, &UserPanel::handleRegisterClicked);
+    confirmPasswordLabel = new QLabel("Confirm Password:", this);
+    confirmPasswordEdit = new QLineEdit(this);
+    confirmPasswordEdit->setEchoMode(QLineEdit::Password);
+    confirmPasswordEdit->setVisible(false);
+
+    button = new QPushButton("Submit", this);
+
+    // Create layouts
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    QHBoxLayout *inputLayout = new QHBoxLayout;
+
+    // Add widgets to layouts
+    inputLayout->addWidget(usernameLabel);
+    inputLayout->addWidget(usernameEdit);
+    inputLayout->addWidget(passwordLabel);
+    inputLayout->addWidget(passwordEdit);
+    inputLayout->addWidget(confirmPasswordLabel);
+    inputLayout->addWidget(confirmPasswordEdit);
+
+    mainLayout->addWidget(comboBox);
+    mainLayout->addLayout(inputLayout);
+    mainLayout->addWidget(button);
+
+    // Connect the button's clicked signal to the handleButtonClicked slot
+    connect(button, &QPushButton::clicked, this, &UserPanel::handleButtonClicked);
+
+    // Connect the comboBox's currentIndexChanged signal to a slot to show/hide confirm password field
+    connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [=](int index) {
+        confirmPasswordLabel->setVisible(index == 1);
+        confirmPasswordEdit->setVisible(index == 1);
+    });
 }
 
-void UserPanel::handleLoginClicked() {
-    emit loginRequested();
-}
+void UserPanel::handleButtonClicked() {
+    QString username = usernameEdit->text();
+    QString password = passwordEdit->text();
+    QString confirmPassword = confirmPasswordEdit->text();
 
-void UserPanel::handleRegisterClicked() {
-    emit registerRequested();
+    if (comboBox->currentIndex() == 0) { // Login
+        emit loginRequested(username, password);
+    } else { // Register
+        emit registerRequested(username, password, confirmPassword);
+    }
 }
-
